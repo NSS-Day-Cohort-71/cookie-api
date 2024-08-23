@@ -1,58 +1,91 @@
--- Run this block if you already have a database and need to re-create it
-DELETE FROM Ship;
-DELETE FROM Hauler;
-DELETE FROM Dock;
-
-DROP TABLE IF EXISTS Ship;
-DROP TABLE IF EXISTS Hauler;
-DROP TABLE IF EXISTS Dock;
--- End block
-
-
--- Run this block to create the tables and seed them with some initial data
-CREATE TABLE `Dock` (
-	`id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	`location`	TEXT NOT NULL,
-	`capacity` INTEGER NOT NULL
+-- Create the flavors table
+CREATE TABLE flavors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE `Hauler` (
-	`id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	`name`	TEXT NOT NULL,
-	`dock_id` INTEGER NOT NULL,
-	FOREIGN KEY(`dock_id`) REFERENCES `Dock`(`id`)
+-- Create the cookies table
+CREATE TABLE cookies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    flavor_id INTEGER NOT NULL,
+    baked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    eaten_at TIMESTAMP,
+    FOREIGN KEY (flavor_id) REFERENCES flavors (id)
 );
 
-CREATE TABLE `Ship` (
-	`id`  INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	`name`  TEXT NOT NULL,
-	`hauler_id` INTEGER NOT NULL,
-	FOREIGN KEY(`hauler_id`) REFERENCES `Hauler`(`id`)
+-- Create the toppings table
+CREATE TABLE toppings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
 );
 
-INSERT INTO `Dock` VALUES (null, 'Antwerp', 1290);
-INSERT INTO `Dock` VALUES (null, 'Shanghai', 840);
-INSERT INTO `Dock` VALUES (null, 'Los Angeles', 1055);
+-- Create a junction table for the many-to-many relationship between cookies and toppings
+CREATE TABLE cookie_toppings (
+    cookie_id INTEGER,
+    topping_id INTEGER,
+    FOREIGN KEY (cookie_id) REFERENCES cookies (id),
+    FOREIGN KEY (topping_id) REFERENCES toppings (id),
+    PRIMARY KEY (cookie_id, topping_id)
+);
+
+-- Insert some initial flavors
+INSERT INTO flavors (name) VALUES
+    ('Chocolate Chip'),
+    ('Oatmeal Raisin'),
+    ('Peanut Butter'),
+    ('Sugar'),
+    ('Double Chocolate');
+
+-- Insert some initial toppings
+INSERT INTO toppings (name) VALUES
+    ('Sprinkles'),
+    ('Chocolate Drizzle'),
+    ('Nuts'),
+    ('Powdered Sugar'),
+    ('Frosting');
+
+-- Create an index on the flavor_id in the cookies table for faster queries
+CREATE INDEX idx_cookies_flavor_id ON cookies (flavor_id);
+
+-- Create indexes on the junction table for faster queries
+CREATE INDEX idx_cookie_toppings_cookie_id ON cookie_toppings (cookie_id);
+CREATE INDEX idx_cookie_toppings_topping_id ON cookie_toppings (topping_id);
 
 
-INSERT INTO `Hauler` VALUES (null, "CTS", 1);
-INSERT INTO `Hauler` VALUES (null, "V90", 1);
-INSERT INTO `Hauler` VALUES (null, "Hollarad", 1);
-INSERT INTO `Hauler` VALUES (null, "TRX-100 F", 2);
-INSERT INTO `Hauler` VALUES (null, "Accrio", 3);
-INSERT INTO `Hauler` VALUES (null, "Prismium", 2);
 
 
-INSERT INTO `Ship` VALUES (null, "Schmidt", 1);
-INSERT INTO `Ship` VALUES (null, "Baumbach", 1);
-INSERT INTO `Ship` VALUES (null, "Haag", 2);
-INSERT INTO `Ship` VALUES (null, "Hartmann", 2);
-INSERT INTO `Ship` VALUES (null, "Keebler", 3);
-INSERT INTO `Ship` VALUES (null, "Ebert", 3);
-INSERT INTO `Ship` VALUES (null, "Beatty", 4);
-INSERT INTO `Ship` VALUES (null, "Hudson", 4);
-INSERT INTO `Ship` VALUES (null, "Becker", 5);
-INSERT INTO `Ship` VALUES (null, "Dickens", 6);
-INSERT INTO `Ship` VALUES (null, "Kunde", 6);
-INSERT INTO `Ship` VALUES (null, "Hermiston", 5);
--- End block
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            SELECT c.id,
+                c.name name,
+                f.name flavor_name,
+                c.baked_at,
+                t.name topping
+            FROM cookies c
+            JOIN flavors f ON f.id = c.flavor_id
+            JOIN cookie_toppings ct ON c.id = ct.cookie_id
+            JOIN toppings t ON t.id = ct.topping_id
+            WHERE c.id = 1
+            AND c.eaten_at IS NULL;
